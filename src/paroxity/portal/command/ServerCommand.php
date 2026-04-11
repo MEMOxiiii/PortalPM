@@ -44,7 +44,7 @@ class ServerCommand extends BaseCommand
 			return;
 		}
 		if(isset($args["player"])) {
-			$target = $args["player"];
+			$target = (string) $args["player"];
 		}
 
 		$this->portal->findPlayer(null, $target, function(UuidInterface $uuid, string $playerName, bool $online, string $server) use ($sender): void {

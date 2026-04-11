@@ -36,7 +36,7 @@ class TransferCommand extends BaseCommand
 	 */
 	public function onRun(CommandSender $sender, string $aliasUsed, array $args): void
 	{
-		$server = $args["server"];
+		$server = (string) $args["server"];
 
 		if(!isset($args["player"])) {
 			if(!$sender instanceof Player) {
@@ -47,7 +47,7 @@ class TransferCommand extends BaseCommand
 			return;
 		}
 
-		$playerName = $args["player"];
+		$playerName = (string) $args["player"];
 		$player = $this->portal->getServer()->getPlayerByPrefix($playerName);
 		if(!$player instanceof Player){
 			$this->portal->findPlayer(null, $playerName, function(UuidInterface $uuid, string $foundName, bool $online, string $currentServer) use ($sender, $server): void {

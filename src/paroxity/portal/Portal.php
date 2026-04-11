@@ -68,12 +68,12 @@ class Portal extends PluginBase implements Listener
 
         $config = $this->getConfig();
 
-        $host = $config->get("proxy-address", "127.0.0.1");
+        $host = (string) $config->get("proxy-address", "127.0.0.1");
         $port = (int)$config->getNested("socket.port", 19131);
 
-        $secret = $config->getNested("socket.secret", "");
+        $secret = (string) $config->getNested("socket.secret", "");
 
-        $name = $config->getNested("server.name", "Name");
+        $name = (string) $config->getNested("server.name", "Name");
         $this->address = ($host === "127.0.0.1" ? "127.0.0.1" : Internet::getIP()) . ":" . $this->getServer()->getPort();
 
         if(!PacketHooker::isRegistered()) {
@@ -102,13 +102,16 @@ class Portal extends PluginBase implements Listener
 	    // We convert the legacy format to the new self-signed format before PM5 processes it.
 	    $interceptor = SimplePacketHandler::createInterceptor($this, EventPriority::LOWEST);
 	    $interceptor->interceptIncoming(function(LoginPacket $packet, NetworkSession $session) : bool {
-		    $json = json_decode($packet->authInfoJson);
-		    if ($json !== null && isset($json->chain) && !isset($json->AuthenticationType)) {
-			    $packet->authInfoJson = json_encode([
+		    $json = json_decode($packet->authInfoJson, false);
+		    if ($json instanceof \stdClass && isset($json->chain) && !isset($json->AuthenticationType)) {
+			    $encoded = json_encode([
 				    "AuthenticationType" => 2,
 				    "Certificate" => $packet->authInfoJson,
 				    "Token" => ""
 			    ]);
+			    if($encoded !== false){
+				    $packet->authInfoJson = $encoded;
+			    }
 		    }
 		    return true;
 	    });
@@ -271,7 +274,6 @@ class Portal extends PluginBase implements Listener
 
     public function getPlayerLatency(Player $player): int
     {
-        /** @var UUID $uuid */
         $uuid = $player->getUniqueId();
         return $this->playerLatencies[$uuid->getBytes()] ?? -1;
     }

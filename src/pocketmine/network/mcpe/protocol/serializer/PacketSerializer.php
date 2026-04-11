@@ -77,6 +77,9 @@ class PacketSerializer
     public function getLShort(): int
     {
         $value = unpack("v", $this->read(2));
+        if($value === false){
+            throw new \RuntimeException("Failed to unpack LShort");
+        }
         return $value[1];
     }
 
@@ -88,6 +91,9 @@ class PacketSerializer
     public function getLInt(): int
     {
         $value = unpack("V", $this->read(4));
+        if($value === false){
+            throw new \RuntimeException("Failed to unpack LInt");
+        }
         return $value[1];
     }
 
@@ -99,6 +105,9 @@ class PacketSerializer
     public function getLLong(): int
     {
         $value = unpack("P", $this->read(8));
+        if($value === false){
+            throw new \RuntimeException("Failed to unpack LLong");
+        }
         return (int) $value[1];
     }
 
