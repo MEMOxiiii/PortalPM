@@ -1,6 +1,9 @@
 # PortalPM
 A PocketMine-MP plugin implementation of the [Portal](https://github.com/Paroxity/portal) TCP socket API. Download from [poggit](https://poggit.pmmp.io/ci/Paroxity/PortalPM)
 
+## Compatibility
+- PocketMine-MP 5.x
+
 ## Usage
 1. Make sure you already have [Portal](https://github.com/Paroxity/portal) set up
 2. Edit ``config.yml`` and update the credentials/information to match your Portal configuration

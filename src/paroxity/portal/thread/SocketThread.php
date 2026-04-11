@@ -7,14 +7,12 @@ use Exception;
 use paroxity\portal\packet\AuthRequestPacket;
 use paroxity\portal\packet\Packet;
 use paroxity\portal\packet\ProtocolInfo;
-use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
-use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
 use pocketmine\snooze\SleeperNotifier;
 use pocketmine\thread\Thread;
 use pocketmine\utils\Binary;
+use pmmp\thread\ThreadSafeArray;
 use Socket;
-use Threaded;
 use function sleep;
 use function socket_close;
 use function socket_connect;
@@ -26,7 +24,6 @@ use function socket_write;
 use function strlen;
 use function usleep;
 use const AF_INET;
-use const PTHREADS_INHERIT_NONE;
 use const SOCK_STREAM;
 use const SOL_TCP;
 
@@ -38,8 +35,8 @@ class SocketThread extends Thread
     private string $secret;
     private string $name;
 
-    private Threaded $sendQueue;
-    private Threaded $receiveBuffer;
+    private ThreadSafeArray $sendQueue;
+    private ThreadSafeArray $receiveBuffer;
 
     private SleeperNotifier $notifier;
 
@@ -54,12 +51,12 @@ class SocketThread extends Thread
 
         $this->name = $name;
 
-        $this->sendQueue = new Threaded();
-        $this->receiveBuffer = new Threaded();
+        $this->sendQueue = new ThreadSafeArray();
+        $this->receiveBuffer = new ThreadSafeArray();
 
         $this->notifier = $notifier;
 
-        $this->isRunning = false;
+        $this->isRunning = true;
         $this->start();
     }
 
@@ -142,12 +139,6 @@ class SocketThread extends Thread
         return $socket;
     }
 
-    public function start($options = PTHREADS_INHERIT_NONE): bool
-    {
-        $this->isRunning = true;
-        return parent::start($options);
-    }
-
     public function quit(): void
     {
         $this->isRunning = false;
@@ -156,8 +147,7 @@ class SocketThread extends Thread
 
     public function addPacketToQueue(Packet $packet): void
     {
-    	$encoderContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary());
-    	$serializer = PacketSerializer::encoder($encoderContext);
+        $serializer = PacketSerializer::encoder();
     	$packet->encode($serializer);
     	$this->sendQueue[] = $serializer->getBuffer();
     }
