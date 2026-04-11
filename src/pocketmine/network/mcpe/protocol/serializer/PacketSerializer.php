@@ -63,6 +63,16 @@ class PacketSerializer
         $this->buffer .= $value ? "\x01" : "\x00";
     }
 
+    public function getByte(): int
+    {
+        return ord($this->read(1));
+    }
+
+    public function putByte(int $value): void
+    {
+        $this->buffer .= chr($value & 0xff);
+    }
+
     public function getLShort(): int
     {
         $value = unpack("v", $this->read(2));
@@ -116,11 +126,6 @@ class PacketSerializer
     {
         $this->putUnsignedVarInt(strlen($value));
         $this->buffer .= $value;
-    }
-
-    private function getByte(): int
-    {
-        return ord($this->read(1));
     }
 
     private function read(int $length): string
