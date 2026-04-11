@@ -4,7 +4,6 @@ declare(strict_types = 1);
 namespace paroxity\portal\command;
 
 use CortexPE\Commando\args\RawStringArgument;
-use CortexPE\Commando\args\TargetPlayerArgument;
 use CortexPE\Commando\BaseCommand;
 use paroxity\portal\packet\TransferResponsePacket;
 use paroxity\portal\Portal;
@@ -31,7 +30,7 @@ class TransferCommand extends BaseCommand
 
 	protected function prepare(): void
 	{
-		$this->registerArgument(0, new TargetPlayerArgument());
+		$this->registerArgument(0, new RawStringArgument("player"));
 		$this->registerArgument(1, new RawStringArgument("server"));
 	}
 

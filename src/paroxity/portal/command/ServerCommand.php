@@ -3,7 +3,7 @@ declare(strict_types = 1);
 
 namespace paroxity\portal\command;
 
-use CortexPE\Commando\args\TargetPlayerArgument;
+use CortexPE\Commando\args\RawStringArgument;
 use CortexPE\Commando\BaseCommand;
 use paroxity\portal\Portal;
 use pocketmine\command\CommandSender;
@@ -29,7 +29,7 @@ class ServerCommand extends BaseCommand
 
 	protected function prepare(): void
 	{
-		$this->registerArgument(0, new TargetPlayerArgument(true));
+		$this->registerArgument(0, new RawStringArgument("player", true));
 	}
 
 	/**
