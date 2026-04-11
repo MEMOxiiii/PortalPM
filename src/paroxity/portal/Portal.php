@@ -5,6 +5,7 @@ namespace paroxity\portal;
 
 use Closure;
 use CortexPE\Commando\PacketHooker;
+use muqsit\simplepackethandler\SimplePacketHandler;
 use paroxity\portal\command\CommandMap;
 use paroxity\portal\packet\AuthResponsePacket;
 use paroxity\portal\packet\FindPlayerRequestPacket;
@@ -21,9 +22,12 @@ use paroxity\portal\packet\TransferRequestPacket;
 use paroxity\portal\packet\TransferResponsePacket;
 use paroxity\portal\packet\UpdatePlayerLatencyPacket;
 use paroxity\portal\thread\SocketThread;
+use pocketmine\event\EventPriority;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerQuitEvent;
+use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
@@ -91,6 +95,23 @@ class Portal extends PluginBase implements Listener
         });
 	    $this->setSleeperNotifierEntry($entry);
 	    $this->thread = new SocketThread($host, $port, $secret, $name, $entry);
+
+	    // Intercept Login packets from proxy connections that use legacy auth format.
+	    // The Go proxy (gophertunnel) with EnableLegacyAuth sends {"chain":["jwt"]}
+	    // but PM5 5.x expects {"AuthenticationType":0, "Certificate":"...", "Token":""}.
+	    // We convert the legacy format to the new self-signed format before PM5 processes it.
+	    $interceptor = SimplePacketHandler::createInterceptor($this, EventPriority::LOWEST);
+	    $interceptor->interceptIncoming(function(LoginPacket $packet, NetworkSession $session) : bool {
+		    $json = json_decode($packet->authInfoJson);
+		    if ($json !== null && isset($json->chain) && !isset($json->AuthenticationType)) {
+			    $packet->authInfoJson = json_encode([
+				    "AuthenticationType" => 2,
+				    "Certificate" => $packet->authInfoJson,
+				    "Token" => ""
+			    ]);
+		    }
+		    return true;
+	    });
     }
 
     public function onDisable(): void
