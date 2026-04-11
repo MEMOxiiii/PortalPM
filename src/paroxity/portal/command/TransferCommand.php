@@ -3,57 +3,55 @@ declare(strict_types = 1);
 
 namespace paroxity\portal\command;
 
-use CortexPE\Commando\args\RawStringArgument;
-use CortexPE\Commando\args\TargetPlayerArgument;
-use CortexPE\Commando\BaseCommand;
 use paroxity\portal\packet\TransferResponsePacket;
 use paroxity\portal\Portal;
+use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\console\ConsoleCommandSender;
 use pocketmine\player\Player;
 use pocketmine\utils\TextFormat;
 use Ramsey\Uuid\UuidInterface;
 
-class TransferCommand extends BaseCommand
+class TransferCommand extends Command
 {
-	/** @var Portal */
-	protected $plugin;
+	private Portal $plugin;
 
 	public function __construct(Portal $plugin)
 	{
-		parent::__construct(
-			$plugin,
-			"transfer",
-			"Fast transfer player to another server",
-		);
+		parent::__construct("transfer", "Fast transfer player to another server", "/transfer <player> <server>");
+		$this->plugin = $plugin;
 		$this->setPermission("portal.command.transfer");
 	}
 
-	protected function prepare(): void
+	public function execute(CommandSender $sender, string $commandLabel, array $args): bool
 	{
-		$this->registerArgument(0, new TargetPlayerArgument());
-		$this->registerArgument(1, new RawStringArgument("server"));
-	}
+		if(!$this->testPermission($sender)) {
+			return true;
+		}
 
-	/**
-	 * @param mixed[] $args
-	 */
-	public function onRun(CommandSender $sender, string $aliasUsed, array $args): void
-	{
-		$player = $this->plugin->getServer()->getPlayerByPrefix($args["player"]);
+		if(count($args) < 2) {
+			$sender->sendMessage(TextFormat::RED . "Usage: /transfer <player> <server>");
+			return true;
+		}
+
+		$targetName = $args[0];
+		$server = $args[1];
+
+		$player = $this->plugin->getServer()->getPlayerByPrefix($targetName);
 		if(!$player instanceof Player){
-			$this->plugin->findPlayer(null, $args["player"], function(UuidInterface $uuid, string $playerName, bool $online, string $server) use ($sender, $args): void {
+			$this->plugin->findPlayer(null, $targetName, function(UuidInterface $uuid, string $playerName, bool $online, string $playerServer) use ($sender, $server): void {
 				if(!$online) {
 					$sender->sendMessage(TextFormat::RED . "Player could not be found");
 					return;
 				}
 
-				$this->transfer($sender, $uuid, $args["server"]);
+				$this->transfer($sender, $uuid, $server);
 			});
-			return;
+			return true;
 		}
 
-		$this->transfer($sender, $player->getUniqueId(), $args["server"]);
+		$this->transfer($sender, $player->getUniqueId(), $server);
+		return true;
 	}
 
 	private function transfer(CommandSender $sender, UuidInterface $uuid, string $server): void

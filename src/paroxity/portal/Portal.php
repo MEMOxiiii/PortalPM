@@ -31,8 +31,6 @@ use pocketmine\snooze\SleeperNotifier;
 use pocketmine\utils\Internet;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
-use function class_exists;
-use function method_exists;
 use function strtolower;
 
 class Portal extends PluginBase implements Listener
@@ -81,11 +79,7 @@ class Portal extends PluginBase implements Listener
         }
 
 	    PacketPool::init();
-        if(class_exists("CortexPE\\Commando\\BaseCommand")) {
-            CommandMap::init($this);
-        } else {
-            $this->getLogger()->warning("Commando dependency is missing, Portal commands were not registered.");
-        }
+        CommandMap::init($this);
 
         $notifier = new SleeperNotifier();
         $this->getServer()->getTickSleeper()->addNotifier($notifier, function () {
