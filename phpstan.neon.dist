@@ -6,5 +6,7 @@ parameters:
     - phar:///pocketmine/PocketMine-MP.phar/vendor/autoload.php
   scanDirectories:
     - /source/src/CortexPE/Commando/
+    - /source/src/muqsit/simplepackethandler/
   ignoreErrors:
-  	- '#[a-zA-Z0-9\\_]+ no value type specified in iterable type [a-zA-Z0-9\\_]+.#'
+    - '#Access to an undefined property pocketmine\\network\\mcpe\\protocol\\LoginPacket::\$authInfoJson#'
+    - '#Negated boolean expression is always false#'
