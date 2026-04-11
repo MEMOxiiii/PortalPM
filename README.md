@@ -103,7 +103,7 @@ command:
 
 ## Server Settings (Required for Go-based Portal Proxy)
 
-If you are connecting through a **Go-based Portal proxy** (built with gophertunnel / Dragonfly), you must adjust two configuration files:
+If you are connecting through a **Go-based Portal proxy** (built with gophertunnel), you must adjust two configuration files:
 
 ### 1. `server.properties`
 
