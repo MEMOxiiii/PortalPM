@@ -5,7 +5,7 @@ parameters:
   bootstrapFiles:
     - phar:///pocketmine/PocketMine-MP.phar/vendor/autoload.php
   scanDirectories:
-    - phar:///source/vendor/Commando.phar/src/
+    - /source/src/CortexPE/Commando/
   excludePaths:
     analyse:
       - source/vendor
