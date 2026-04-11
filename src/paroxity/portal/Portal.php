@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace paroxity\portal;
 
 use Closure;
-use CortexPE\Commando\PacketHooker;
 use paroxity\portal\command\CommandMap;
 use paroxity\portal\exception\PortalAuthException;
 use paroxity\portal\packet\AuthResponsePacket;
@@ -32,6 +31,8 @@ use pocketmine\snooze\SleeperNotifier;
 use pocketmine\utils\Internet;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
+use function class_exists;
+use function method_exists;
 use function strtolower;
 
 class Portal extends PluginBase implements Listener
@@ -72,12 +73,19 @@ class Portal extends PluginBase implements Listener
         $name = $config->getNested("server.name", "Name");
         $this->address = ($host === "127.0.0.1" ? "127.0.0.1" : Internet::getIP()) . ":" . $this->getServer()->getPort();
 
-        if(!PacketHooker::isRegistered()){
-	        PacketHooker::register($this);
+        if(class_exists("CortexPE\\Commando\\PacketHooker")) {
+            $packetHookerClass = "CortexPE\\Commando\\PacketHooker";
+            if(method_exists($packetHookerClass, "isRegistered") && method_exists($packetHookerClass, "register") && !$packetHookerClass::isRegistered()) {
+                $packetHookerClass::register($this);
+            }
         }
 
 	    PacketPool::init();
-        CommandMap::init($this);
+        if(class_exists("CortexPE\\Commando\\BaseCommand")) {
+            CommandMap::init($this);
+        } else {
+            $this->getLogger()->warning("Commando dependency is missing, Portal commands were not registered.");
+        }
 
         $notifier = new SleeperNotifier();
         $this->getServer()->getTickSleeper()->addNotifier($notifier, function () {
