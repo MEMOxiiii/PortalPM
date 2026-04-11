@@ -14,13 +14,10 @@ use function strtolower;
 
 class ServerCommand extends BaseCommand
 {
-	/** @var Portal */
-	protected $plugin;
-
-	public function __construct(Portal $plugin)
+	public function __construct(private Portal $portal)
 	{
 		parent::__construct(
-			$plugin,
+			$portal,
 			"server",
 			"Check which server you are on currently",
 		);
@@ -50,7 +47,7 @@ class ServerCommand extends BaseCommand
 			$target = $args["player"];
 		}
 
-		$this->plugin->findPlayer(null, $target, function(UuidInterface $uuid, string $playerName, bool $online, string $server) use ($sender): void {
+		$this->portal->findPlayer(null, $target, function(UuidInterface $uuid, string $playerName, bool $online, string $server) use ($sender): void {
 			if(!$online) {
 				$sender->sendMessage(TextFormat::RED . "Player: $playerName could not be found");
 				return;

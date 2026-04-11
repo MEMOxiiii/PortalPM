@@ -11,13 +11,10 @@ use pocketmine\utils\TextFormat;
 
 class ServersCommand extends BaseCommand
 {
-	/** @var Portal */
-	protected $plugin;
-
-	public function __construct(Portal $plugin)
+	public function __construct(private Portal $portal)
 	{
 		parent::__construct(
-			$plugin,
+			$portal,
 			"servers",
 			"Get a list of servers on the proxy",
 		);
@@ -34,7 +31,7 @@ class ServersCommand extends BaseCommand
 	 */
 	public function onRun(CommandSender $sender, string $aliasUsed, array $args): void
 	{
-		$this->plugin->requestServerList(function(array $servers) use($sender) {
+		$this->portal->requestServerList(function(array $servers) use($sender) {
 			$serverList = array_map(fn(ServerListEntry $server) => $server->getName() . TextFormat::GREEN . " (" . $server->getPlayerCount() . " players)" . TextFormat::RESET, $servers);
 			$sender->sendMessage("There are " . TextFormat::GREEN . count($servers) . TextFormat::RESET . " servers connected to the proxy: " . implode(", ", $serverList));
 		});

@@ -15,13 +15,10 @@ use Ramsey\Uuid\UuidInterface;
 
 class TransferCommand extends BaseCommand
 {
-	/** @var Portal */
-	protected $plugin;
-
-	public function __construct(Portal $plugin)
+	public function __construct(private Portal $portal)
 	{
 		parent::__construct(
-			$plugin,
+			$portal,
 			"transfer",
 			"Fast transfer player to another server",
 		);
@@ -30,8 +27,8 @@ class TransferCommand extends BaseCommand
 
 	protected function prepare(): void
 	{
-		$this->registerArgument(0, new RawStringArgument("player"));
-		$this->registerArgument(1, new RawStringArgument("server"));
+		$this->registerArgument(0, new RawStringArgument("server"));
+		$this->registerArgument(1, new RawStringArgument("player", true));
 	}
 
 	/**
@@ -39,36 +36,44 @@ class TransferCommand extends BaseCommand
 	 */
 	public function onRun(CommandSender $sender, string $aliasUsed, array $args): void
 	{
-		$player = $this->plugin->getServer()->getPlayerByPrefix($args["player"]);
+		$server = $args["server"];
+
+		if(!isset($args["player"])) {
+			if(!$sender instanceof Player) {
+				$sender->sendMessage(TextFormat::RED . "Usage: /transfer <server> <player>");
+				return;
+			}
+			$this->transfer($sender, $sender->getUniqueId(), $server);
+			return;
+		}
+
+		$playerName = $args["player"];
+		$player = $this->portal->getServer()->getPlayerByPrefix($playerName);
 		if(!$player instanceof Player){
-			$this->plugin->findPlayer(null, $args["player"], function(UuidInterface $uuid, string $playerName, bool $online, string $server) use ($sender, $args): void {
+			$this->portal->findPlayer(null, $playerName, function(UuidInterface $uuid, string $foundName, bool $online, string $currentServer) use ($sender, $server): void {
 				if(!$online) {
 					$sender->sendMessage(TextFormat::RED . "Player could not be found");
 					return;
 				}
 
-				$this->transfer($sender, $uuid, $args["server"]);
+				$this->transfer($sender, $uuid, $server);
 			});
 			return;
 		}
 
-		$this->transfer($sender, $player->getUniqueId(), $args["server"]);
+		$this->transfer($sender, $player->getUniqueId(), $server);
 	}
 
 	private function transfer(CommandSender $sender, UuidInterface $uuid, string $server): void
 	{
-		$this->plugin->transferPlayerByUUID($uuid, $server, function(?Player $player, int $status, string $error) use ($sender, $server): void {
-			if($player === null || !$player->isOnline()){
-				return;
-			}
+		$this->portal->transferPlayerByUUID($uuid, $server, function(?Player $player, int $status, string $error) use ($sender, $server): void {
 			switch($status) {
 				case TransferResponsePacket::RESPONSE_SUCCESS:
-					if($sender !== $player && !$sender instanceof ConsoleCommandSender) {
-						$sender->sendMessage(TextFormat::GREEN . "Player: " . $player->getName() . " was transferred to " . $server . " successfully");
+					if($player !== null && $player->isOnline()) {
+						$player->sendMessage(TextFormat::GREEN . "You were transferred to " . $server);
 					}
-
-					$player->sendMessage(TextFormat::GREEN . "You were transferred to " . $server);
-					$this->plugin->getLogger()->info("Player: " . $player->getName() . " was transferred to " . $server . " by " . $sender->getName());
+					$sender->sendMessage(TextFormat::GREEN . "Player was transferred to " . $server . " successfully");
+					$this->portal->getLogger()->info("Transfer to " . $server . " by " . $sender->getName());
 				break;
 
 				case TransferResponsePacket::RESPONSE_SERVER_NOT_FOUND:

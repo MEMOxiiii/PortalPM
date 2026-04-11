@@ -8,6 +8,7 @@ use Ramsey\Uuid\UuidInterface;
 use function ord;
 use function pack;
 use function strlen;
+use function strrev;
 use function substr;
 use function unpack;
 
@@ -108,12 +109,20 @@ class PacketSerializer
 
     public function getUUID(): UuidInterface
     {
-        return Uuid::fromBytes($this->read(16));
+        // gophertunnel's protocol.Reader.UUID() reads 16 bytes then reverses
+        // each 8-byte half (Little Endian int64 pair). We must undo this.
+        $bytes = $this->read(16);
+        $bytes = strrev(substr($bytes, 0, 8)) . strrev(substr($bytes, 8, 8));
+        return Uuid::fromBytes($bytes);
     }
 
     public function putUUID(UuidInterface $uuid): void
     {
-        $this->buffer .= $uuid->getBytes();
+        // gophertunnel's protocol.Writer.UUID() swaps halves then reverses all 16 bytes.
+        // PHP must produce the same wire format so Go can decode correctly.
+        $bytes = $uuid->getBytes();
+        $swapped = substr($bytes, 8, 8) . substr($bytes, 0, 8);
+        $this->buffer .= strrev($swapped);
     }
 
     public function getString(): string
