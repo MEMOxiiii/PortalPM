@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace paroxity\portal;
 
 use Closure;
+use CortexPE\Commando\PacketHooker;
 use paroxity\portal\command\CommandMap;
 use paroxity\portal\exception\PortalAuthException;
 use paroxity\portal\packet\AuthResponsePacket;
@@ -27,7 +28,7 @@ use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
-use pocketmine\snooze\SleeperNotifier;
+use pocketmine\snooze\SleeperHandlerEntry;
 use pocketmine\utils\Internet;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
@@ -39,6 +40,7 @@ class Portal extends PluginBase implements Listener
 
     private SocketThread $thread;
 	private string $address;
+    private ?int $sleeperNotifierId = null;
 
     /** @var Closure[] */
     private $transferring = [];
@@ -71,18 +73,14 @@ class Portal extends PluginBase implements Listener
         $name = $config->getNested("server.name", "Name");
         $this->address = ($host === "127.0.0.1" ? "127.0.0.1" : Internet::getIP()) . ":" . $this->getServer()->getPort();
 
-        if(class_exists("CortexPE\\Commando\\PacketHooker")) {
-            $packetHookerClass = "CortexPE\\Commando\\PacketHooker";
-            if(method_exists($packetHookerClass, "isRegistered") && method_exists($packetHookerClass, "register") && !$packetHookerClass::isRegistered()) {
-                $packetHookerClass::register($this);
-            }
+        if(!PacketHooker::isRegistered()) {
+            PacketHooker::register($this);
         }
 
 	    PacketPool::init();
         CommandMap::init($this);
 
-        $notifier = new SleeperNotifier();
-        $this->getServer()->getTickSleeper()->addNotifier($notifier, function () {
+	    $entry = $this->getServer()->getTickSleeper()->addNotifier(function () {
             while (($buffer = $this->thread->getBuffer()) !== null) {
 	            $stream = PacketSerializer::decoder($buffer, 0);
                 $packet = PacketPool::getPacket($buffer);
@@ -92,12 +90,21 @@ class Portal extends PluginBase implements Listener
                 }
             }
         });
-	    $this->thread = new SocketThread($host, $port, $secret, $name, $notifier);
+	    $this->setSleeperNotifierEntry($entry);
+	    $this->thread = new SocketThread($host, $port, $secret, $name, $entry);
     }
 
     public function onDisable(): void
     {
         $this->thread->quit();
+        if($this->sleeperNotifierId !== null) {
+            $this->getServer()->getTickSleeper()->removeNotifier($this->sleeperNotifierId);
+        }
+    }
+
+    private function setSleeperNotifierEntry(SleeperHandlerEntry $entry): void
+    {
+        $this->sleeperNotifierId = $entry->getNotifierId();
     }
 
     public static function getInstance(): Portal

@@ -8,7 +8,7 @@ use paroxity\portal\packet\AuthRequestPacket;
 use paroxity\portal\packet\Packet;
 use paroxity\portal\packet\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
-use pocketmine\snooze\SleeperNotifier;
+use pocketmine\snooze\SleeperHandlerEntry;
 use pocketmine\thread\Thread;
 use pocketmine\utils\Binary;
 use pmmp\thread\ThreadSafeArray;
@@ -38,11 +38,11 @@ class SocketThread extends Thread
     private ThreadSafeArray $sendQueue;
     private ThreadSafeArray $receiveBuffer;
 
-    private SleeperNotifier $notifier;
+    private SleeperHandlerEntry $sleeperEntry;
 
     private bool $isRunning;
 
-    public function __construct(string $host, int $port, string $secret, string $name, SleeperNotifier $notifier)
+    public function __construct(string $host, int $port, string $secret, string $name, SleeperHandlerEntry $sleeperEntry)
     {
         $this->host = $host;
         $this->port = $port;
@@ -54,7 +54,7 @@ class SocketThread extends Thread
         $this->sendQueue = new ThreadSafeArray();
         $this->receiveBuffer = new ThreadSafeArray();
 
-        $this->notifier = $notifier;
+        $this->sleeperEntry = $sleeperEntry;
 
         $this->isRunning = true;
         $this->start();
@@ -63,6 +63,7 @@ class SocketThread extends Thread
     public function onRun(): void
     {
         $this->registerClassLoaders();
+        $notifier = $this->sleeperEntry->createNotifier();
 
         $socket = $this->connectToSocketServer();
 		if($socket === null) {
@@ -97,7 +98,7 @@ class SocketThread extends Thread
                         $read = @socket_read($socket, $length);
                         if ($read !== false) {
                             $this->receiveBuffer[] = $read;
-                            $this->notifier->wakeupSleeper();
+                            $notifier->wakeupSleeper();
                         }
                     } elseif ($read === "") {
                         socket_close($socket);

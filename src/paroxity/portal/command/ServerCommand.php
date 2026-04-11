@@ -3,42 +3,51 @@ declare(strict_types = 1);
 
 namespace paroxity\portal\command;
 
+use CortexPE\Commando\args\TargetPlayerArgument;
+use CortexPE\Commando\BaseCommand;
 use paroxity\portal\Portal;
-use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\console\ConsoleCommandSender;
 use pocketmine\utils\TextFormat;
 use Ramsey\Uuid\UuidInterface;
 use function strtolower;
 
-class ServerCommand extends Command
+class ServerCommand extends BaseCommand
 {
-	private Portal $plugin;
+	/** @var Portal */
+	protected $plugin;
 
 	public function __construct(Portal $plugin)
 	{
-		parent::__construct("server", "Check which server you are on currently", "/server [player]");
-		$this->plugin = $plugin;
-		$this->setPermission("portal.command.server");
+		parent::__construct(
+			$plugin,
+			"server",
+			"Check which server you are on currently",
+		);
+		$this->setPermission("portal.command.server;portal.command.server.self;portal.command.server.other");
 	}
 
-	public function execute(CommandSender $sender, string $commandLabel, array $args): bool
+	protected function prepare(): void
 	{
-		if(!$this->testPermission($sender)) {
-			return true;
-		}
+		$this->registerArgument(0, new TargetPlayerArgument(true));
+	}
 
+	/**
+	 * @param mixed[] $args
+	 */
+	public function onRun(CommandSender $sender, string $aliasUsed, array $args): void
+	{
 		$target = $sender->getName();
-		if($sender instanceof ConsoleCommandSender && !isset($args[0])) {
-			$sender->sendMessage(TextFormat::RED . "Usage: /server <player>");
-			return true;
+		if($sender instanceof ConsoleCommandSender && !isset($args["player"])) {
+			$this->sendUsage();
+			return;
 		}
-		if(isset($args[0]) && !$sender->hasPermission("portal.command.server.other")) {
+		if(isset($args["player"]) && !$sender->hasPermission("portal.command.server.other")) {
 			$sender->sendMessage(TextFormat::RED . "You don't have the permission to check server of other player");
-			return true;
+			return;
 		}
-		if(isset($args[0])) {
-			$target = $args[0];
+		if(isset($args["player"])) {
+			$target = $args["player"];
 		}
 
 		$this->plugin->findPlayer(null, $target, function(UuidInterface $uuid, string $playerName, bool $online, string $server) use ($sender): void {
@@ -53,7 +62,5 @@ class ServerCommand extends Command
 				$sender->sendMessage(TextFormat::GREEN . "Player: $playerName is currently on $server");
 			}
 		});
-
-		return true;
 	}
 }
