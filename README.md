@@ -101,17 +101,28 @@ command:
 
 ---
 
-## Server Settings (Required)
+## Server Settings (Required for Go-based Portal Proxy)
 
-If you are connecting through a **Go-based proxy** (gophertunnel), you need to adjust your `pocketmine.yml`:
+If you are connecting through a **Go-based Portal proxy** (built with gophertunnel / Dragonfly), you must adjust two configuration files:
+
+### 1. `server.properties`
+
+```properties
+xbox-auth=off
+```
+
+### 2. `pocketmine.yml`
 
 ```yaml
 player:
-  # Disable XUID verification — required because the proxy uses self-signed auth
   verify-xuid: false
 ```
 
-> **Why?** The Go proxy uses `EnableLegacyAuth` mode which sends self-signed JWTs without Xbox Live XUID. The plugin intercepts and converts the auth format, but XUID verification must be disabled.
+> **Why?** The Go-based Portal proxy uses `EnableLegacyAuth` mode which sends self-signed JWTs instead of Xbox Live authenticated tokens. This means:
+> - Xbox authentication must be turned off in `server.properties` because the proxy does not forward Xbox Live auth.
+> - XUID verification must be disabled in `pocketmine.yml` because the proxy sends empty XUID values with self-signed auth.
+>
+> The plugin automatically intercepts and converts the legacy auth format so PM5 can process the login correctly.
 
 ---
 
