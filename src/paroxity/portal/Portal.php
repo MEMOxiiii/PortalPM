@@ -6,7 +6,6 @@ namespace paroxity\portal;
 use Closure;
 use CortexPE\Commando\PacketHooker;
 use paroxity\portal\command\CommandMap;
-use paroxity\portal\exception\PortalAuthException;
 use paroxity\portal\packet\AuthResponsePacket;
 use paroxity\portal\packet\FindPlayerRequestPacket;
 use paroxity\portal\packet\FindPlayerResponsePacket;
@@ -161,7 +160,9 @@ class Portal extends PluginBase implements Listener
 				    $reason = "Attempted to send packets whilst not authenticated";
 				    break;
 		    }
-		    throw new PortalAuthException($reason);
+            $this->getLogger()->critical("Proxy authentication failed: " . $reason);
+            $this->getServer()->getPluginManager()->disablePlugin($this);
+            return;
 	    }
 	    $this->getLogger()->info("Authenticated with socket server");
 		$this->thread->addPacketToQueue(RegisterServerPacket::create($this->address));
