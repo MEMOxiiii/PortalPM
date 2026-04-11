@@ -11,6 +11,6 @@ jobs:
         with:
           ref: ${{ github.ref }}
       - name: Run PHPStan
-        uses: paroxity/pmmp-phpstan-action@4.2.0
+        uses: paroxity/pmmp-phpstan-action@5.12.0
         with:
           phpstan-config: phpstan.neon.dist

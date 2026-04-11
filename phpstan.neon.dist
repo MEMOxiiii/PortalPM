@@ -1,13 +1,10 @@
 parameters:
   paths:
-    - /source/src
+    - /source/src/paroxity
   level: 8
   bootstrapFiles:
     - phar:///pocketmine/PocketMine-MP.phar/vendor/autoload.php
   scanDirectories:
     - /source/src/CortexPE/Commando/
-  excludePaths:
-    analyse:
-      - source/vendor
   ignoreErrors:
   	- '#[a-zA-Z0-9\\_]+ no value type specified in iterable type [a-zA-Z0-9\\_]+.#'
