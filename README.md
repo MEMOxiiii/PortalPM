@@ -103,7 +103,7 @@ command:
 
 ## Server Settings (Required)
 
-If you are connecting through a **Go-based proxy** (gophertunnel / Dragonfly), you need to adjust your `pocketmine.yml`:
+If you are connecting through a **Go-based proxy** (gophertunnel), you need to adjust your `pocketmine.yml`:
 
 ```yaml
 player:
