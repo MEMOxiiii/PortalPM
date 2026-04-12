@@ -189,7 +189,7 @@ class Portal extends PluginBase implements Listener
             return;
 	    }
 	    $this->getLogger()->info("Authenticated with socket server");
-		$this->thread->addPacketToQueue(RegisterServerPacket::create($this->address));
+		$this->thread->addPacketToQueue(RegisterServerPacket::create($this->address, true));
     }
 
     /**
