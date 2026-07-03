@@ -5,7 +5,7 @@ namespace paroxity\portal\packet;
 
 class ProtocolInfo
 {
-	public const PROTOCOL_VERSION = 1;
+	public const PROTOCOL_VERSION = 2;
 
     public const AUTH_REQUEST_PACKET = 0x00;
     public const AUTH_RESPONSE_PACKET = 0x01;
@@ -19,4 +19,6 @@ class ProtocolInfo
     public const FIND_PLAYER_REQUEST_PACKET = 0x09;
     public const FIND_PLAYER_RESPONSE_PACKET = 0x0a;
     public const UPDATE_PLAYER_LATENCY_PACKET = 0x0b;
+    public const DISCONNECT_PLAYER_PACKET = 0x0c;
+    public const SET_SERVER_DRAINING_PACKET = 0x0d;
 }

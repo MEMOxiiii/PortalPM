@@ -153,7 +153,7 @@ class PacketSerializer
         return $value;
     }
 
-    private function getUnsignedVarInt(): int
+    public function getUnsignedVarInt(): int
     {
         $value = 0;
         $shift = 0;
@@ -168,7 +168,7 @@ class PacketSerializer
         }
     }
 
-    private function putUnsignedVarInt(int $value): void
+    public function putUnsignedVarInt(int $value): void
     {
         while(($value & ~0x7f) !== 0) {
             $this->buffer .= chr(($value & 0x7f) | 0x80);

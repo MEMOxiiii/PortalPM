@@ -35,13 +35,13 @@ class UpdatePlayerLatencyPacket extends Packet
     public function decodePayload(PacketSerializer $in): void
     {
         $this->playerUUID = $in->getUUID();
-        $this->latency = $in->getLInt();
+        $this->latency = $in->getLLong();
     }
 
     public function encodePayload(PacketSerializer $out): void
     {
         $out->putUUID($this->playerUUID);
-        $out->putLInt($this->latency);
+        $out->putLLong($this->latency);
     }
 
     public function handlePacket(): void

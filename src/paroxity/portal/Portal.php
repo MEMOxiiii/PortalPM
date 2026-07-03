@@ -8,6 +8,7 @@ use CortexPE\Commando\PacketHooker;
 use muqsit\simplepackethandler\SimplePacketHandler;
 use paroxity\portal\command\CommandMap;
 use paroxity\portal\packet\AuthResponsePacket;
+use paroxity\portal\packet\DisconnectPlayerPacket;
 use paroxity\portal\packet\FindPlayerRequestPacket;
 use paroxity\portal\packet\FindPlayerResponsePacket;
 use paroxity\portal\packet\Packet;
@@ -18,6 +19,7 @@ use paroxity\portal\packet\ProtocolInfo;
 use paroxity\portal\packet\RegisterServerPacket;
 use paroxity\portal\packet\ServerListRequestPacket;
 use paroxity\portal\packet\ServerListResponsePacket;
+use paroxity\portal\packet\SetServerDrainingPacket;
 use paroxity\portal\packet\TransferRequestPacket;
 use paroxity\portal\packet\TransferResponsePacket;
 use paroxity\portal\packet\UpdatePlayerLatencyPacket;
@@ -43,6 +45,8 @@ class Portal extends PluginBase implements Listener
 
     private SocketThread $thread;
 	private string $address;
+	private string $group;
+	private int $weight;
     private ?int $sleeperNotifierId = null;
 
     /** @var Closure[] */
@@ -75,6 +79,8 @@ class Portal extends PluginBase implements Listener
 
         $name = (string) $config->getNested("server.name", "Name");
         $this->address = ($host === "127.0.0.1" ? "127.0.0.1" : Internet::getIP()) . ":" . $this->getServer()->getPort();
+        $this->group = (string) $config->getNested("server.group", "");
+        $this->weight = (int) $config->getNested("server.weight", 0);
 
         if(!PacketHooker::isRegistered()) {
             PacketHooker::register($this);
@@ -189,7 +195,27 @@ class Portal extends PluginBase implements Listener
             return;
 	    }
 	    $this->getLogger()->info("Authenticated with socket server");
-		$this->thread->addPacketToQueue(RegisterServerPacket::create($this->address, true));
+		$this->thread->addPacketToQueue(RegisterServerPacket::create($this->address, true, $this->group, $this->weight));
+    }
+
+    /**
+     * @internal
+     */
+    public function handleDisconnectPlayer(DisconnectPlayerPacket $packet): void
+    {
+        $player = $this->getServer()->getPlayerExact($packet->getPlayerName());
+        if ($player !== null) {
+            $player->kick("Connecting from another location");
+        }
+    }
+
+    /**
+     * Tells the proxy whether load balancers should stop routing new players to this server. Players
+     * already connected are unaffected. Typically called before a planned restart or deployment.
+     */
+    public function setDraining(bool $draining): void
+    {
+        $this->thread->addPacketToQueue(SetServerDrainingPacket::create($draining));
     }
 
     /**

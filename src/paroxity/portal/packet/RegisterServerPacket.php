@@ -11,12 +11,16 @@ class RegisterServerPacket extends Packet
 
 	private string $address;
 	private bool $legacyAuth;
+	private string $group;
+	private int $weight;
 
-    public static function create(string $address, bool $legacyAuth = true): self
+    public static function create(string $address, bool $legacyAuth = true, string $group = "", int $weight = 0): self
     {
         $result = new self;
         $result->address = $address;
         $result->legacyAuth = $legacyAuth;
+        $result->group = $group;
+        $result->weight = $weight;
         return $result;
     }
 
@@ -30,16 +34,30 @@ class RegisterServerPacket extends Packet
         return $this->legacyAuth;
     }
 
+    public function getGroup(): string
+    {
+        return $this->group;
+    }
+
+    public function getWeight(): int
+    {
+        return $this->weight;
+    }
+
     protected function decodePayload(PacketSerializer $in): void
     {
         $this->address = $in->getString();
         $this->legacyAuth = $in->getBool();
+        $this->group = $in->getString();
+        $this->weight = $in->getUnsignedVarInt();
     }
 
     protected function encodePayload(PacketSerializer $out): void
     {
         $out->putString($this->address);
         $out->putBool($this->legacyAuth);
+        $out->putString($this->group);
+        $out->putUnsignedVarInt($this->weight);
     }
 
     public function handlePacket(): void

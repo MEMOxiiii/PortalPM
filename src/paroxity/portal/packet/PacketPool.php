@@ -25,6 +25,8 @@ class PacketPool
         static::registerPacket(new FindPlayerRequestPacket());
         static::registerPacket(new FindPlayerResponsePacket());
         static::registerPacket(new UpdatePlayerLatencyPacket());
+        static::registerPacket(new DisconnectPlayerPacket());
+        static::registerPacket(new SetServerDrainingPacket());
     }
 
     public static function registerPacket(Packet $packet): void

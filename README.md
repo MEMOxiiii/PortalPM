@@ -55,6 +55,10 @@ socket:
 server:
   # The name this server will register as on the proxy
   name: "Hub1"
+  # The load balancer group this server belongs to. Leave empty for no group.
+  group: ""
+  # Share of new players relative to others in the same group. 0 is treated as 1.
+  weight: 0
 
 command:
   # Enable or disable all commands
@@ -73,6 +77,8 @@ command:
 | `socket.port` | int | `19131` | TCP port the proxy's socket server listens on. |
 | `socket.secret` | string | `""` | Authentication secret. **Must match** the `secret` in your Portal proxy config. |
 | `server.name` | string | `"Hub1"` | The name this server registers as on the proxy. Must be unique per server. |
+| `server.group` | string | `""` | Load-balancer group this server belongs to. Leave empty for no group. |
+| `server.weight` | int | `0` | Share of new players relative to others in the same group. `0` is treated as `1`. |
 | `command.enable` | bool | `true` | Master toggle for all built-in commands. |
 | `command.commands.transfer` | bool | `true` | Enable the `/transfer` command. |
 | `command.commands.server` | bool | `true` | Enable the `/server` command. |
@@ -169,7 +175,14 @@ $portal->requestServerList(function(array $servers) {
 
 // Get player latency
 $latency = $portal->getPlayerLatency($player);
+
+// Mark this server as draining (e.g. before a planned restart) so the proxy's load
+// balancers stop routing new players to it. Already-connected players are unaffected.
+$portal->setDraining(true);
 ```
+
+The plugin also automatically disconnects any stale local session when the proxy sends a
+`DisconnectPlayerPacket` ahead of transferring a player here — no action needed on your part.
 
 ---
 

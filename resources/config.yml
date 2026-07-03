@@ -4,6 +4,11 @@ socket:
   secret: ""
 server:
   name: "Hub1"
+  # group is the load balancer group this server belongs to. Leave empty for no group.
+  group: ""
+  # weight controls how large a share of new players this server receives relative to others in the same
+  # group. 0 is treated by the proxy as 1, giving an even split if you never set it.
+  weight: 0
 command:
   enable: true
   commands:
